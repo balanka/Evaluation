@@ -7,21 +7,17 @@ import com.iws.model._
 
 trait  ImportFunction [A<:IWS] {
 
-  type ObjectList = (String, List[String], String, String, CharsetDecoder) =>
+    type ObjectList = (String, List[String], String, String, CharsetDecoder) =>
                                                                  List[Either[String,A]]
     def getLines (file:File, decoder:CharsetDecoder, FS:String): List[Either [String,A]]
-    def getObjectsFromFiles( dir:File, extension:List[String],
-                         decoder:CharsetDecoder, FS:String):  List[Either[String,A]] =
-      getListOfFiles(dir, extension).flatMap(getLines (_, decoder, FS))
+    def getObjects (path:String, extension:List[String],
+            filter: String, FS:String, decoder: CharsetDecoder):List[Either[String,A]]=
+               getListOfFiles(new File(path), extension).flatMap(getLines (_, decoder, FS))
 
-  def getObjects (path:String, extension:List[String],
-            filter: String, FS:String,decoder: CharsetDecoder):List[Either[String,A]]
-               = getObjectsFromFiles(new File(path),extension, decoder, FS)
-  def getListOfFiles(dir: File, extensions: List[String]): List[File] =
-    dir.listFiles.filter(_.isFile).toList.filter {
-      file => extensions.exists(file.getName.endsWith(_))
-    }
-
+     def getListOfFiles(dir: File, extensions: List[String]): List[File] =
+           dir.listFiles.filter(_.isFile).toList.filter {
+           file => extensions.exists(file.getName.endsWith(_))
+           }
 }
 object ImportFunction {
 
