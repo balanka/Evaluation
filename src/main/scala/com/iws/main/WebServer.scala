@@ -100,7 +100,7 @@ object WebServer {
 
   def main(args: Array[String]) {
 
-      /*var speechesx=List(
+      var speeches = List(
       Speech("Alexander Abel", "Bildungspolitik", "2012-10-30", 5310),
       Speech("Alexander Abel", "Bildungspolitik", "2012-10-30", 5310),
       Speech("Bernhard Belling", "Kohlesubventionen", "2012-11-05", 1210),
@@ -115,48 +115,7 @@ object WebServer {
       Speech("Bernhard Belling", "Innere Sicherheit", "2012-12-11", 911)
     )
 
-   for {
-      q <- Queue.bounded[String](10)
-      _ <- q.offer("a")
-      _ <- q.offer("b")
-      s <- Stream.fromQueue(q).foreach(a => putStrLn(a)).fork
-      _ <- q.offer("c")
-      _ <- q.offer("d")
-      _ <- s.await
-    } yield 0
-
-     */
-      // val url:java.net.URL = getClass.getResource("/Users/iwsmac/Downloads/tools/scala/samples/akka/Evaluation/src/main/resources/20190807-43006329-umsatz.CSV")
-      def list2Tuple1(x: List[String]): List[String] =
-      x match {
-      case List (a, b, c, d, e, f, g, h, i, j, k) =>
-           List (a, b, c, d, e, f, g, h, i, j, k)
-    }
-    def tuple2BankStatement(x: List[String]): List[BankStatement] =
-    x match {
-    case List (a, b, c, d, e, f, g, h, i, j, k) =>
-         List (BankStatement (a, b, c, d, e, f, g, h, i, j, k))
-    }
-
-
-    val rawDataList = scala.io.Source.fromFile("/Users/iwsmac/Downloads/20190807-43006329-umsatz.CSV").getLines.toList
-     val data = rawDataList.map(_.split(";").toList) match {
-                                 case x :: xs => xs.flatMap(tuple2BankStatement)
-                              }
-    data.foreach(println)
-    System.exit(0)
-    //logged.ensuring()
-
-    //val r =iter.right
-    //val rawData=scala.io.Source.fromURL(url).mkString
-    //val bs = rawData.asCsvReader[BankStatement](rfc.withHeader).collect { case Right(a) ⇒ a }.toList
-    //bs.foreach(println)
-    //println("BS:"+bs)
-   // }
-    //System.exit(0)
-   // val rawData=scala.io.Source.fromURL("https://dev-stefan.s3.amazonaws.com/politics.csv").mkString
    // val speeches = rawData.asCsvReader[Speech](rfc.withHeader).collect { case Right(a) ⇒ a }.toList
-    val speeches=List.empty[Speech]
 
     val route: Route =
       concat(

@@ -6,6 +6,7 @@ import java.nio.charset.CharsetDecoder
 import com.iws.model._
 
 trait  ImportFunction [A<:IWS] {
+
   type ObjectList = (String, List[String], String, String, CharsetDecoder) =>
                                                                  List[Either[String,A]]
     def getLines (file:File, decoder:CharsetDecoder, FS:String): List[Either [String,A]]
