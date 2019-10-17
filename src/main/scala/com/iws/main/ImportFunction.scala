@@ -9,9 +9,11 @@ trait  ImportFunction [A<:IWS] {
 
     type ObjectList = (String, List[String], String, String, CharsetDecoder) =>
                                                                  List[Either[String,A]]
-    def getLines (file:File, decoder:CharsetDecoder, FS:String): List[Either [String,A]]
-    def getObjects (path:String, extension:List[String],
-            filter: String, FS:String, decoder: CharsetDecoder):List[Either[String,A]]=
+   def getPF:(List[String]) => List[Either[String, A]]
+    def getLines (file:File, decoder:CharsetDecoder, FS:String): List[Either [String,A]] =
+     scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(getPF)
+    def getObjects (path:String, extension:List[String], filter: String, FS:String,
+                    decoder: CharsetDecoder)                   :List[Either[String,A]]=
                getListOfFiles(new File(path), extension).flatMap(getLines (_, decoder, FS))
 
      def getListOfFiles(dir: File, extensions: List[String]): List[File] =
@@ -32,12 +34,11 @@ object ImportFunction {
       })
   }
 
-
   object ImportAccount extends ImportFunction [Account] {
-    val pf = new PartialFunction[List[String], List[Either[String, Account]]] {
-      def isDefinedAt(x: List[String]) = !x.isEmpty
+      def getPF= new PartialFunction[List[String], List[Either[String, Account]]] {
+         def isDefinedAt(x: List[String]) = !x.isEmpty
 
-      def apply(rawdata: List[String]) =
+       def apply(rawdata: List[String]) =
         rawdata match {
           case List(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) =>
             try {
@@ -57,12 +58,9 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,Account]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
   }
   object ImportDetailsFinancialsTransaction extends ImportFunction [DetailsFinancialsTransaction] {
-    val pf = new PartialFunction[List[String], List[Either[String, DetailsFinancialsTransaction]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, DetailsFinancialsTransaction]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -86,13 +84,11 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,DetailsFinancialsTransaction]]
-     =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
+
 
   }
   object ImportFinancialsTransaction extends ImportFunction [FinancialsTransaction] {
-    val pf = new PartialFunction[List[String], List[Either[String, FinancialsTransaction]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, FinancialsTransaction]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -115,12 +111,10 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,FinancialsTransaction]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
+
   }
   object ImportSupplier extends ImportFunction [Supplier] {
-    val pf = new PartialFunction[List[String], List[Either[String, Supplier]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, Supplier]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -143,12 +137,9 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,Supplier]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
   }
   object ImportCustomer extends ImportFunction [Customer] {
-    val pf = new PartialFunction[List[String], List[Either[String, Customer]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, Customer]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -171,12 +162,10 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,Customer]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
+
   }
   object ImportPeriodicAccountBalance extends ImportFunction [PeriodicAccountBalance] {
-    val pf = new PartialFunction[List[String], List[Either[String, PeriodicAccountBalance]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, PeriodicAccountBalance]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -198,12 +187,10 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String, PeriodicAccountBalance]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
+
   }
   object ImportBankStatement extends ImportFunction [BankStatement ] {
-    val pf = new PartialFunction[List[String], List[Either[String, BankStatement]]] {
+    def getPF = new PartialFunction[List[String], List[Either[String, BankStatement]]] {
       def isDefinedAt(x: List[String]) = !x.isEmpty
 
       def apply(rawdata: List[String]) =
@@ -225,9 +212,7 @@ object ImportFunction {
           }
         }
     }
-    override def getLines (file:File,  decoder:CharsetDecoder,
-                           FS:String): List[ Either [ String,BankStatement ]]
-    =scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(pf)
+
   }
 }
 
