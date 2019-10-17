@@ -1,9 +1,8 @@
-Aufgabe  als Pruefung zur Aufnahme ins Scala-Team von 
+Playground for financials/accounting application with scala
 
 ```
-> git clone https://github.com/richardimaoka/resources.git
-> cd resources
-> cd akka-http-quickstart
+> git clone https://github.com/balanka/Evaluation.git
+> cd Evaluation
 > sbt
 > run
 ```
