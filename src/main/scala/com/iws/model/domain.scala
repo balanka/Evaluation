@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
-import com.iws.model.common.Amount
+import com.iws.model.common.{Amount, DATE_FORMAT}
 import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
 
 import scala.collection.immutable.TreeMap
@@ -19,6 +19,7 @@ final case class Speech(
 )
 object common{
   type Amount = scala.math.BigDecimal
+  val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 }
 
 trait ContainerT [+A<:IWS,-B<:IWS] {
@@ -73,8 +74,6 @@ final case  class Account (id:String, name:String, description:String, dateofope
 
 
 object Account {
-
-  val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   implicit def int2Boolean(i:Int) = i==1
  def apply (id:String, name:String, description:String, dateofopen:String, dateofclose:String,
@@ -120,7 +119,6 @@ final case  class DetailsFinancialsTransaction ( lid:Long, transId:Long, account
   def name=text
 }
 object DetailsFinancialsTransaction {
-  val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   implicit def int2Boolean(i:Int) = i==1
   def apply ( id:String, transId:String, account:String, side:String,oaccount:String,
@@ -133,7 +131,7 @@ final case  class Customer (id:String, name:String, description:String, street:S
                             zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
                            vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends IWS
 object Customer {
-  val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
+
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   def apply (id:String, name:String, description:String, street:String, city:String, state:String,
              zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
@@ -146,7 +144,6 @@ final case  class Supplier (id:String, name:String, description:String, street:S
                             zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
                             vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends IWS
 object Supplier {
-  val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   def apply (id:String, name:String, description:String, street:String, city:String, state:String,
              zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
@@ -221,12 +218,11 @@ object IWSCache { //extends Subject [IWS, IWS]  with  Observer [IWS]{
   }
 
   def get(item: IWS): Seq[IWS] = cache.getOrElse(item.modelId, Data(List.empty[IWS])).items
-  def get(modelId:Int): Seq[IWS] = {val x =cache.getOrElse(modelId, Data(List.empty[IWS])); println(x); println(x.items); x.items}
+  def get(modelId:Int): Seq[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items
   def delete(item: IWS): Data = cache.getOrElse(item.modelId, Data(List.empty[IWS])).remove(item)
 
   def list(item:IWS, pageSize: Int, offset: Int): List[IWS] =
     cache.getOrElse(item.modelId, Data(List.empty[IWS]))
-      //.items.toList.sortBy(_.id.value).slice(offset, offset + pageSize)
       .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
 
   def all(modelId:Int, pageSize: Int, offset: Int): List[IWS] =
