@@ -8,11 +8,9 @@ package com.iws.main
 
   import scala.util.Try
 
-
   object EvaluationActor {
 
     final case class ExecuteRequest(param:RequestParameter)
-
 
     def props: Props = Props[EvaluationActor]
   }
@@ -21,7 +19,7 @@ package com.iws.main
     import EvaluationActor._
 
     //var speeches = Set.empty[Speech]
-    val speechesx=List(
+    val speechesx = List(
       Speech("Alexander Abel", "Bildungspolitik", "2012-10-30", 5310),
       Speech("Alexander Abel", "Bildungspolitik", "2012-10-30", 5310),
       Speech("Bernhard Belling", "Kohlesubventionen", "2012-11-05", 1210),
@@ -90,13 +88,12 @@ package com.iws.main
     def receive: Receive = {
 
       case ExecuteRequest(request) => {
-
         val mostSpeeches :String= Try(fetchMostSpeeches(speechesx, request.year)).getOrElse("null")
         val mostSecurity:String = Try(fetchMostSecurity(speechesx, request.theme)).getOrElse("null")
         val leastWordy:String = Try(fetchLeastWordy(speechesx,request.words)).getOrElse("null")
 
         val result:Result= Result(mostSpeeches, mostSecurity, leastWordy)
-        sender() ! Result("null", "null", "null")
+        sender() ! result //Result("null", "null", "null")
       }
 
     }
