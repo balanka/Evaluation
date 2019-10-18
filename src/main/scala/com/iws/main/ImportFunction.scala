@@ -9,14 +9,14 @@ trait  ImportFunction [A<:IWS] {
 
     type ObjectList = (String, List[String], String, String, CharsetDecoder) =>
                                                                  List[Either[String,A]]
-   def getPF:(List[String]) => List[Either[String, A]]
+    def getPF:(List[String]) => List[Either[String, A]]
     def getLines (file:File, decoder:CharsetDecoder, FS:String): List[Either [String,A]] =
      scala.io.Source.fromFile(file)(decoder).getLines.toList.map(_.split(FS).toList) .flatMap(getPF)
     def getObjects (path:String, extension:List[String], filter: String, FS:String,
                     decoder: CharsetDecoder)                   :List[Either[String,A]]=
                getListOfFiles(new File(path), extension).flatMap(getLines (_, decoder, FS))
 
-     def getListOfFiles(dir: File, extensions: List[String]): List[File] =
+    def getListOfFiles(dir: File, extensions: List[String]): List[File] =
            dir.listFiles.filter(_.isFile).toList.filter {
            file => extensions.exists(file.getName.endsWith(_))
            }
@@ -34,6 +34,30 @@ object ImportFunction {
       })
   }
 
+  object ImportBankAccount extends ImportFunction [BankAccount] {
+    def getPF= new PartialFunction[List[String], List[Either[String, BankAccount]]] {
+      def isDefinedAt(x: List[String]) = !x.isEmpty
+
+      def apply(rawdata: List[String]) =
+        rawdata match {
+          case List(a, b, c, d, e, f, g, h, i) =>
+            try {
+              val ba=BankAccount.apply(a.trim, b.trim, c.trim, h.trim)
+              List(Right(ba))
+            } catch {
+              case ex: Exception => {
+                ex.printStackTrace();
+                println("%s %s %s  %s  %s %s %s %s %s %s  %s %s %s %s %s %s".format(a, b, c, d, e, f, g, h, i));
+                List(Left(ex.getMessage))
+              }
+            }
+          case y => {
+            println("x>>>>>> %s", y)
+            List(Left(y.toString))
+          }
+        }
+    }
+  }
   object ImportAccount extends ImportFunction [Account] {
       def getPF= new PartialFunction[List[String], List[Either[String, Account]]] {
          def isDefinedAt(x: List[String]) = !x.isEmpty
@@ -172,7 +196,7 @@ object ImportFunction {
         rawdata match {
           case List(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p,q) =>
             try {
-              val tx= PeriodicAccountBalance.apply(a.trim, c.trim, d.trim, m.trim, n.trim, e.trim, f.trim, g.trim, h.trim)
+              val tx= PeriodicAccountBalance.apply(c.trim, d.trim, m.trim, n.trim, e.trim, f.trim, g.trim, h.trim)
               List(Right(tx))
             } catch {
               case ex: Exception => {

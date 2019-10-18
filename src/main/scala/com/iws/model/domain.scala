@@ -22,6 +22,44 @@ object common{
   val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 }
 
+sealed trait IWS {
+  def id: String //MasterfileId
+  def modelId: Int
+}
+sealed trait  Masterfile extends IWS {
+  def name:String
+  def description:String
+
+  def canEqual(a: Any) = a.isInstanceOf[Masterfile]
+  override def equals(that: Any): Boolean =
+    that match {
+      case that: Masterfile => that.canEqual(this) && (this.hashCode == that.hashCode) &&
+        this.id.equals(that.id) && (this.modelId == that.modelId)
+      case _ => false
+    }
+  override def hashCode:Int = {
+    val prime = 31
+    var result = 1
+    var r:Int=0
+    def id1(m:String):Int= try {
+      r = m.toInt
+      r
+    }catch  {
+      case ex: Exception =>
+        val l:List[Int] = m.toList.map(c=>c.toInt)
+        r = l.fold(0){(z,i) =>z+i}
+        r
+      case _ => r
+    }finally {
+      r
+    }
+
+    result = prime * result + modelId +id1(id)
+    result
+  }
+}
+
+
 trait ContainerT [+A<:IWS,-B<:IWS] {
   def update(newItem: B): ContainerT [A,B]
   def updateAll(all: Seq[B]): ContainerT [A,B]
@@ -31,12 +69,9 @@ trait ContainerT [+A<:IWS,-B<:IWS] {
   def add(newItem: B): ContainerT [A,B]
 }
 final case class MasterfileId(value: String) extends AnyVal
-sealed trait IWS {
-  def id: String //MasterfileId
-  def modelId: Int
-}
-case class Data  (items: Seq[IWS]) extends ContainerT [IWS,IWS]{
-  override def update(newItem: IWS) = {
+
+case class Data [A<:IWS]  (items: Seq[A]) extends ContainerT [A,A]{
+  override def update(newItem: A) = {
     items.indexWhere((_.id == newItem.id)) match {
       case -1 =>
         Data(items :+ newItem)
@@ -44,9 +79,9 @@ case class Data  (items: Seq[IWS]) extends ContainerT [IWS,IWS]{
         Data(items.updated(index, newItem))
     }
   }
-  override def updateAll(all: Seq[IWS]) =  Data((items.toSet ++all.toSet).toList)
-  override def add(newItem: IWS)= Data(items :+ newItem)
-  override def remove (item: IWS) = Data(items.filterNot(_.id==item.id))
+  override def updateAll(all: Seq[A]) =  Data((items.toSet ++all.toSet).toList)
+  override def add(newItem: A)= Data(items :+ newItem)
+  override def remove (item: A) = Data(items.filterNot(_.id==item.id))
 }
 
 object Currency extends Enumeration {
@@ -85,14 +120,14 @@ object Account {
       dateFormat.parse(posted), dateFormat.parse(updated),0,modelId.toInt,
       isResultAccount.toInt, isIncomeStatementAccount.toInt )
 }
-final case  class PeriodicAccountBalance ( id:String, accountId:String, periode:Int, idebit:BigDecimal, icredit:BigDecimal,
+final case  class PeriodicAccountBalance (id:String, accountId:String, periode:Int, idebit:BigDecimal, icredit:BigDecimal,
                                             debit:BigDecimal, credit:BigDecimal,
-                                            company:Int, currency:String, modelId:Int = 106) extends IWS
+                                            company:String, currency:String, modelId:Int = 106) extends IWS
 object PeriodicAccountBalance {
- def apply ( id:String, accountId:String, periode:String, idebit:String, icredit:String,
+ def apply ( accountId:String, periode:String, idebit:String, icredit:String,
              debit:String, credit:String, company:String, currency:String) =
-   new PeriodicAccountBalance(id, accountId, periode.toInt, BigDecimal(idebit), BigDecimal(icredit),
-     BigDecimal(debit), BigDecimal(credit), company.toInt, currency )
+   new PeriodicAccountBalance(periode.concat(accountId), accountId, periode.toInt, BigDecimal(idebit.replace (".0000", ".00")), BigDecimal(icredit.replace (".0000", ".00")),
+     BigDecimal(debit.replace (".0000", ".00")), BigDecimal(credit.replace (".0000", ".00")), company, currency)
 }
 final case  class FinancialsTransaction (  tid:Long, oid:Long, costCenter:String, account:String,
                                           transdate:Date, enterdate:Date, postingdate:Date, periode:Int,posted:Boolean,
@@ -151,6 +186,15 @@ object Supplier {
     new Supplier (id, name, description, street, city, state,zipCode,tel, email, accountId, companyId, iban,
       vatCode, oAccountId, dateFormat.parse(postingdate), dateFormat.parse(updated), modelId.toInt )
 }
+final case  class BankAccount (iban:String, owner:String,bic:String,companyId:String, modelId:Int=12) extends IWS{
+  def id:String = iban
+  def name:String = owner
+
+}
+object BankAccount {
+  def apply (iban:String, owner:String, bic:String, companyId:String)=
+            new  BankAccount(iban, owner, bic, companyId)
+}
 final case  class BankStatement (auftragskonto:String,
                                  buchungstag:String,
                                  valutadatum:String,
@@ -182,21 +226,58 @@ object BankStatement {
   implicit val bankStatementJsonFormat: RootJsonFormat[BankStatement] = jsonFormat12(BankStatement.apply)
 }
 
-object IWSCache { //extends Subject [IWS, IWS]  with  Observer [IWS]{
+trait Cache [A<:IWS] {
 
-  private var cache = new TreeMap[Int, Data]
+  def +(item: A): Option[A] = update(item)
+  def update(item: A): Option[A]
+  def updateAll(l: List[A]): Option[Data[A]]
+  def get(item: A): Seq[A]
+  def get(modelId:Int): Seq[A]
+  def get(id:String, modelId:Int): Seq[A]
+  def delete(item: A): Data[A]
+  def list(item:A, pageSize: Int, offset: Int): List[A]
+  def all(modelId:Int, pageSize: Int, offset: Int): List[A]
 
-  /*
-    private var observers: List[Observer[IWS]] = Nil
-   override def addObserver(observer: Observer[IWS]) = observers = observer :: observers
+}
+object MasterfileCache extends Cache [Masterfile]  { //extends Subject [IWS, IWS]  with  Observer [IWS]{
 
-   override def notifyObservers() = observers.foreach(_.update(this))
+  private var cache = new TreeMap[Int, Data[Masterfile]]
+  override  def update(item: Masterfile): Option[Masterfile] = {
 
-   */
+    if (!cache.contains(item.modelId)) {
+      cache += (item.modelId -> Data(List(item)))
+    } else {
+      cache.getOrElse(item.modelId, Data(List(item))).update(item)
+    }
+    Some(item)
 
-  def +(item: IWS): Option[IWS] = update(item)
+  }
 
-  def update(item: IWS): Option[IWS] = {
+  override def updateAll(l: List[Masterfile]): Option[Data[Masterfile]] = {
+    if (l == null || l.isEmpty) return None
+    else {
+      val l2: Data[Masterfile] = cache.getOrElse(l.head.modelId, Data(l))
+      cache += (l.head.modelId -> l2.updateAll(l))
+      Some(l2)
+    }
+  }
+
+  override  def get(item: Masterfile): Seq[Masterfile] = cache.getOrElse(item.modelId, Data(List.empty[Masterfile])).items
+  override def get(modelId: Int): Seq[Masterfile] = cache.getOrElse(modelId, Data(List.empty[Masterfile])).items
+  override def get(id: String, modelId: Int): Seq[Masterfile] = cache.getOrElse(modelId, Data(List.empty[Masterfile])).items.filter(_.id.equals(id))
+  override def delete(item: Masterfile): Data[Masterfile] = cache.getOrElse(item.modelId, Data(List.empty[Masterfile])).remove(item)
+  override def list(item: Masterfile, pageSize: Int, offset: Int): List[Masterfile] =
+    cache.getOrElse(item.modelId, Data(List.empty[Masterfile]))
+      .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
+
+  override def all(modelId: Int, pageSize: Int, offset: Int): List[Masterfile] =
+    cache.getOrElse(modelId, Data(List.empty[Masterfile]))
+      .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
+}
+object IWSCache extends Cache [IWS]{
+
+  private var cache = new TreeMap[Int, Data[IWS]]
+  override def update(item: IWS): Option[IWS] = {
 
     if( !cache.contains(item.modelId)) {
       cache +=(item.modelId ->Data(List(item)))
@@ -207,11 +288,11 @@ object IWSCache { //extends Subject [IWS, IWS]  with  Observer [IWS]{
 
   }
 
-  def updateAll(l: List[IWS]): Option[Data ]= {
+  def updateAll(l: List[IWS]): Option[Data[IWS] ]= {
 
     if(l==null || l.isEmpty)  return  None
     else {
-      val l2:Data = cache.getOrElse(l.head.modelId, Data(l))
+      val l2:Data[IWS] = cache.getOrElse(l.head.modelId, Data(l))
       cache +=(l.head.modelId -> l2.updateAll(l))
       Some(l2)
     }
@@ -219,7 +300,8 @@ object IWSCache { //extends Subject [IWS, IWS]  with  Observer [IWS]{
 
   def get(item: IWS): Seq[IWS] = cache.getOrElse(item.modelId, Data(List.empty[IWS])).items
   def get(modelId:Int): Seq[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items
-  def delete(item: IWS): Data = cache.getOrElse(item.modelId, Data(List.empty[IWS])).remove(item)
+  def get(id:String, modelId:Int): Seq[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items.filter(_.id.equals(id))
+  def delete(item: IWS): Data[IWS] = cache.getOrElse(item.modelId, Data(List.empty[IWS])).remove(item)
 
   def list(item:IWS, pageSize: Int, offset: Int): List[IWS] =
     cache.getOrElse(item.modelId, Data(List.empty[IWS]))
@@ -227,5 +309,42 @@ object IWSCache { //extends Subject [IWS, IWS]  with  Observer [IWS]{
 
   def all(modelId:Int, pageSize: Int, offset: Int): List[IWS] =
     cache.getOrElse(modelId, Data(List.empty[IWS]))
+      .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
+}
+
+object FinancialsTransactionCache extends Cache [FinancialsTransaction]  {
+
+  private var cache = new TreeMap[Int, Data[FinancialsTransaction]]
+  override  def update(item: FinancialsTransaction): Option[FinancialsTransaction] = {
+
+    if (!cache.contains(item.modelId)) {
+      cache += (item.modelId -> Data(List(item)))
+    } else {
+      cache.getOrElse(item.modelId, Data(List(item))).update(item)
+    }
+    Some(item)
+
+  }
+
+  override def updateAll(l: List[FinancialsTransaction]): Option[Data[FinancialsTransaction]] = {
+
+    if (l == null || l.isEmpty) return None
+    else {
+      val l2: Data[FinancialsTransaction] = cache.getOrElse(l.head.modelId, Data(l))
+      cache += (l.head.modelId -> l2.updateAll(l))
+      Some(l2)
+    }
+  }
+
+  override  def get(item: FinancialsTransaction): Seq[FinancialsTransaction] = cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction])).items
+  override def get(modelId: Int): Seq[FinancialsTransaction] = cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction])).items
+  override def get(id: String, modelId: Int): Seq[FinancialsTransaction] = cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction])).items.filter(_.id.equals(id))
+  override def delete(item: FinancialsTransaction): Data[FinancialsTransaction] = cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction])).remove(item)
+  override def list(item: FinancialsTransaction, pageSize: Int, offset: Int): List[FinancialsTransaction] =
+    cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction]))
+      .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
+
+  override def all(modelId: Int, pageSize: Int, offset: Int): List[FinancialsTransaction] =
+    cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction]))
       .items.toList.sortBy(_.id).slice(offset, offset + pageSize)
 }
