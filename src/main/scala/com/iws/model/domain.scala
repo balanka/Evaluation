@@ -103,20 +103,27 @@ object Speech {
 implicit val speechJsonFormat: RootJsonFormat[Speech] = jsonFormat4(Speech.apply)
 }
 final case  class Account (id:String, name:String, description:String, dateofopen:Date, dateofclose:Date,
-                           balance:BigDecimal, company:Int, parentId:String, isDebit:Boolean, isBalanceSheetAccount:Boolean,
+                           balance:BigDecimal, company:String, parentId:String, isDebit:Boolean, isBalanceSheetAccount:Boolean,
                            posted:Date, updated:Date, typeJournal:Int, modelId:Int, isResultAccount:Boolean,
-                           isIncomeStatementAccount:Boolean) extends IWS
+                           isIncomeStatementAccount:Boolean, subAccounts:List[Account]=List.empty) extends Masterfile {
+  def add(accounts:List[Account]):Account = this.copy(subAccounts=accounts)
+  def addMe(account:Account):Account = this.copy(subAccounts=subAccounts:+account)
+}
 
 
 object Account {
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   implicit def int2Boolean(i:Int) = i==1
+
+  def addAllSubAccounts(accounts:List[Account]):List[Account] =
+    accounts.map(x=> x.copy(subAccounts=accounts.filter(_.parentId.equals(x.id))))
+
  def apply (id:String, name:String, description:String, dateofopen:String, dateofclose:String,
-    balance:String, company:String, parentId:String, isDebit:String, isBalanceSheetAccount:String,
-    posted:String, updated:String, typeJournal:String, modelId:String, isResultAccount:String,
-    isIncomeStatementAccount:String) =
+             balance:String, company:String, parentId:String, isDebit:String, isBalanceSheetAccount:String,
+             posted:String, updated:String, typeJournal:String, modelId:String, isResultAccount:String,
+             isIncomeStatementAccount:String) =
     new Account (id, name, description, dateFormat.parse(dateofopen), dateFormat.parse(dateofclose),
-      BigDecimal(balance),company.toInt, parentId, isDebit.toInt, isBalanceSheetAccount.toInt,
+      BigDecimal(balance),company, parentId, isDebit.toInt, isBalanceSheetAccount.toInt,
       dateFormat.parse(posted), dateFormat.parse(updated),0,modelId.toInt,
       isResultAccount.toInt, isIncomeStatementAccount.toInt )
 }
@@ -164,7 +171,7 @@ object DetailsFinancialsTransaction {
 }
 final case  class Customer (id:String, name:String, description:String, street:String, city:String, state:String,
                             zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
-                           vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends IWS
+                           vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends Masterfile
 object Customer {
 
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
@@ -177,7 +184,7 @@ object Customer {
 
 final case  class Supplier (id:String, name:String, description:String, street:String, city:String, state:String,
                             zipCode:String, tel:String, email:String, accountId:String, companyId:String, iban:String,
-                            vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends IWS
+                            vatCode:String, oAccountId:String, postingdate:Date,updated:Date, modelId:Int) extends Masterfile
 object Supplier {
   val dateFormat = new SimpleDateFormat(DATE_FORMAT)
   def apply (id:String, name:String, description:String, street:String, city:String, state:String,
@@ -233,7 +240,7 @@ trait Cache [A<:IWS] {
   def updateAll(l: List[A]): Option[Data[A]]
   def get(item: A): Seq[A]
   def get(modelId:Int): Seq[A]
-  def get(id:String, modelId:Int): Seq[A]
+  def get(id:String, modelId:Int): Option[A]
   def delete(item: A): Data[A]
   def list(item:A, pageSize: Int, offset: Int): List[A]
   def all(modelId:Int, pageSize: Int, offset: Int): List[A]
@@ -264,7 +271,8 @@ object MasterfileCache extends Cache [Masterfile]  { //extends Subject [IWS, IWS
 
   override  def get(item: Masterfile): Seq[Masterfile] = cache.getOrElse(item.modelId, Data(List.empty[Masterfile])).items
   override def get(modelId: Int): Seq[Masterfile] = cache.getOrElse(modelId, Data(List.empty[Masterfile])).items
-  override def get(id: String, modelId: Int): Seq[Masterfile] = cache.getOrElse(modelId, Data(List.empty[Masterfile])).items.filter(_.id.equals(id))
+  override def get(id: String, modelId: Int): Option[Masterfile] = cache.getOrElse(modelId,
+    Data(List.empty[Masterfile])).items.filter(_.id.equals(id)).headOption
   override def delete(item: Masterfile): Data[Masterfile] = cache.getOrElse(item.modelId, Data(List.empty[Masterfile])).remove(item)
   override def list(item: Masterfile, pageSize: Int, offset: Int): List[Masterfile] =
     cache.getOrElse(item.modelId, Data(List.empty[Masterfile]))
@@ -300,7 +308,7 @@ object IWSCache extends Cache [IWS]{
 
   def get(item: IWS): Seq[IWS] = cache.getOrElse(item.modelId, Data(List.empty[IWS])).items
   def get(modelId:Int): Seq[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items
-  def get(id:String, modelId:Int): Seq[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items.filter(_.id.equals(id))
+  def get(id:String, modelId:Int): Option[IWS] = cache.getOrElse(modelId, Data(List.empty[IWS])).items.filter(_.id.equals(id)).headOption
   def delete(item: IWS): Data[IWS] = cache.getOrElse(item.modelId, Data(List.empty[IWS])).remove(item)
 
   def list(item:IWS, pageSize: Int, offset: Int): List[IWS] =
@@ -338,7 +346,7 @@ object FinancialsTransactionCache extends Cache [FinancialsTransaction]  {
 
   override  def get(item: FinancialsTransaction): Seq[FinancialsTransaction] = cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction])).items
   override def get(modelId: Int): Seq[FinancialsTransaction] = cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction])).items
-  override def get(id: String, modelId: Int): Seq[FinancialsTransaction] = cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction])).items.filter(_.id.equals(id))
+  override def get(id: String, modelId: Int): Option[FinancialsTransaction] = cache.getOrElse(modelId, Data(List.empty[FinancialsTransaction])).items.filter(_.id.equals(id)).headOption
   override def delete(item: FinancialsTransaction): Data[FinancialsTransaction] = cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction])).remove(item)
   override def list(item: FinancialsTransaction, pageSize: Int, offset: Int): List[FinancialsTransaction] =
     cache.getOrElse(item.modelId, Data(List.empty[FinancialsTransaction]))

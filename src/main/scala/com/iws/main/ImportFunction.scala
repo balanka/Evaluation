@@ -52,7 +52,7 @@ object ImportFunction {
               }
             }
           case y => {
-            println("x>>>>>> %s", y)
+           // println("x>>>>>> %s", y)
             List(Left(y.toString))
           }
         }
@@ -91,7 +91,7 @@ object ImportFunction {
         rawdata match {
           case List(a, b, c, d, e, f, g, h, i, j, _, _) =>
             try {
-              println("%s %s %s  %s  %s %s %s %s %s %s".format(a.trim, b.trim, c.trim, d.trim, e.trim, f.trim, g.trim, h.trim, i.trim, j.trim))
+             // println("%s %s %s  %s  %s %s %s %s %s %s".format(a.trim, b.trim, c.trim, d.trim, e.trim, f.trim, g.trim, h.trim, i.trim, j.trim))
               val dx = DetailsFinancialsTransaction.apply(a.trim, b.trim, c.trim, d.trim, e.trim, f.trim, g.trim,
                 h.trim, i.trim, j.trim)
               List(Right(dx))

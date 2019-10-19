@@ -15,12 +15,7 @@ object  Processing  {
       val map:Map[String,PeriodicAccountBalance]=IWSCache.get(modelId).groupBy(_.id).mapValues(_.head).asInstanceOf[Map[String,PeriodicAccountBalance]] //asInstanceOf[Map[String,List[PeriodicAccountBalance]]]
       val pacc=map.getOrElse(periode.toString.concat(accountId),
         PeriodicAccountBalance(periode.toString.concat(accountId), accountId, periode, BigDecimal(0),BigDecimal(0),BigDecimal(0),  BigDecimal(0), company, currency,modelId ))
-      if (isDebit) {
-        pacc.copy(debit=pacc.debit+amount)
-      } else {
-        pacc.copy(credit = pacc.credit + amount)
-      }
-
+      if (isDebit) pacc.copy(debit=pacc.debit+amount) else pacc.copy(credit = pacc.credit + amount)
 
     }
 

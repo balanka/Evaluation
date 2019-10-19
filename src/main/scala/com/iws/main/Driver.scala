@@ -40,18 +40,41 @@ object  Driver  {
     val l9=l7.map(t =>t.copy( lines=map.getOrElse(t.tid,List.empty[DetailsFinancialsTransaction])))
 
     //val ref: UIO[Ref[Map[String, PeriodicAccountBalance]]] = Ref.make(l5.groupBy(_.id).toMap)
-    IWSCache.updateAll(l1)
-    IWSCache.updateAll(l2)
-    IWSCache.updateAll(l3)
+    MasterfileCache.updateAll(l1)
+    MasterfileCache.updateAll(l2)
+    MasterfileCache.updateAll(l3)
     IWSCache.updateAll(l4)
     IWSCache.updateAll(l5)
     IWSCache.updateAll(l6)
     FinancialsTransactionCache.updateAll(l9)
+    val accounts:List[Account]=MasterfileCache.get(9).asInstanceOf[List[Account]].filter(_.company.equals("1000"))
+    //accounts.filter(_.parentId.equals("6")).foreach(println)
+    //val xx=accounts.map(x=> x.copy( subAccounts=accounts.filter(_.parentId.equals(x.id))))
+    //xx.filter(_.parentId.equals("6")).foreach(println)
+    Account.addAllSubAccounts(accounts).filter(_.parentId.equals("6")).filter(_.id.equals("7300")).foreach(println)
+    //def getParent(parentId:String, accounts:List[Account]): Option[Account] = accounts.filter(_.id.equals(parentId)).headOption
+    //........Account.addAllSubAccounts(accounts).filter(_.id.equals("9801")).filter(_.company.equals("1000")).foreach(println)
    // val r=IWSCache.get(114)
    //   l9.foreach(ProcessFinancialsTransaction.post(_:FinancialsTransaction).foreach(println))
-    val r=FinancialsTransactionCache.get("1318",114)
-     r.foreach(println)
-      r.foreach( ProcessFinancialsTransaction.post(_:FinancialsTransaction).foreach(println))
+    //val r=FinancialsTransactionCache.get("1318",114)
+   // r.foreach( ProcessFinancialsTransaction.post(_:FinancialsTransaction).foreach(println))
+    //val accounts:List[Account]=MasterfileCache.get(9).asInstanceOf[List[Account]]
+    //accounts.map(m =>accounts.filter(_.id.equals(m.parentId)).headOption.map(_.addMe(m))).flatten.filter(_.id.equals("9900")).foreach(println)
+   //<<<<<accounts.map( x => accounts.filter(_.id.equals(x.parentId)).headOption.map(_.addMe(x))).flatten.filter(_.id.equals("0095")).filter(_.company.equals("1000")).foreach(println)
+
+    //accounts.map( x => getParent (x.parentId, accounts).headOption.map(_.addMe(x))).flatten.filter(_.id.equals("9902")).foreach(println)
+    //>>>accounts.map( x => getParent (x.parentId, accounts).headOption.map(_.addMe(x))).flatten.filter(_.id.equals("0095")).filter(_.company.equals("1000")).foreach(println)
+   // accounts.map(m =>m.addMe(accounts.filter(_.parentId.equals(m.id)).headOption.map(_.addMe(m))).flatten.filter(_.id.equals("9900")).foreach(println)
+    //val accountsx:List[Account]=MasterfileCache.get(9).asInstanceOf[List[Account]]
+    //val ac=accounts.map(x =>x.copy(subAccounts = accounts.filter(_.parentId.equals( x.id) ))).filter(_.id.equals("9900")).foreach(println)
+
+   // val ac=accounts.map(x =>x.add(accounts.filter(_.parentId.equals( x.id) ))).filter(_.id.equals("9900")).foreach(println)
+   //val r=MasterfileCache.get("9900",9).asInstanceOf[Option[Account]].map(x =>{
+
+
+ //Account.buildSubAccounts(r).foreach(println)
+
+
 
   }
 
