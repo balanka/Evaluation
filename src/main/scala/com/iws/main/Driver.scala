@@ -47,11 +47,20 @@ object  Driver  {
     IWSCache.updateAll(l5)
     IWSCache.updateAll(l6)
     FinancialsTransactionCache.updateAll(l9)
+    val periodicAccountBalances =IWSCache.get(106).asInstanceOf[List[PeriodicAccountBalance]].filter(_.company.equals("1000"))
     val accounts:List[Account]=MasterfileCache.get(9).asInstanceOf[List[Account]].filter(_.company.equals("1000"))
+    //Account.addAllSubAccounts(accounts).filter(_.parentId.equals("6")).filter(_.id.equals("7300")).foreach(println)
+
+    Account.addAllSubAccounts(accounts).filter(_.parentId.equals("6")).filter(_.id.equals("7300")).foreach(println)
+    periodicAccountBalances.foreach(println)
+    val abc=Account.addBalances(201802,accounts, periodicAccountBalances ).flatMap(_.balances)
+      abc.foreach(println)
+    //Account.addBalances(201801,accounts, periodicAccountBalances ).flatMap(_.balances).foreach(println) //.filter(_.parentId.equals("6")).filter(_.id.equals("7300")).foreach(println)
+
     //accounts.filter(_.parentId.equals("6")).foreach(println)
     //val xx=accounts.map(x=> x.copy( subAccounts=accounts.filter(_.parentId.equals(x.id))))
     //xx.filter(_.parentId.equals("6")).foreach(println)
-    Account.addAllSubAccounts(accounts).filter(_.parentId.equals("6")).filter(_.id.equals("7300")).foreach(println)
+
     //def getParent(parentId:String, accounts:List[Account]): Option[Account] = accounts.filter(_.id.equals(parentId)).headOption
     //........Account.addAllSubAccounts(accounts).filter(_.id.equals("9801")).filter(_.company.equals("1000")).foreach(println)
    // val r=IWSCache.get(114)

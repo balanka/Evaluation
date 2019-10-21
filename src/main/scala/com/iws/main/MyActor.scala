@@ -1,34 +1,23 @@
 package com.iws.main
-
-import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.HttpMethods.GET
-import akka.http.scaladsl.model._
-import akka.stream.ActorMaterializer
-import scala.concurrent.Future
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
-import scala.util.{ Failure, Success }
-import scala.concurrent.ExecutionContext.Implicits.global
+import akka.actor.{Actor, ActorRef, Props, ActorSystem}
+import akka.event.Logging
 
 class MyActor extends Actor {
+  val log = Logging(context.system, this)
 
-  implicit val materializer = ActorMaterializer()
-// implicit val ec: ExecutionContext = system.dispatcher
+  def receive = {
+    case "test" => log.info("received test")
+    case _      => log.info("received unknown message")
+  }
+}
 
-  override def receive: Receive = {
-    case _ => {
-      // use context.system explicitly
-      val responseFuture: Future[HttpResponse] = Http(context.system)
-        .singleRequest(HttpRequest(uri = "http://localhost:8090"))
-      responseFuture onComplete {
-        case Success(res) => println(res)
-        case Failure(t) => println("An error has occured: " + t.getMessage)
-      }
-    }
+object Main {
+
+  def main(args: Array[String]): Unit = {
+    val system = ActorSystem("demo")
+    val myActor = system.actorOf(Props[MyActor2])
+
+    myActor ! "test"
+
   }
 }

@@ -105,7 +105,7 @@ implicit val speechJsonFormat: RootJsonFormat[Speech] = jsonFormat4(Speech.apply
 final case  class Account (id:String, name:String, description:String, dateofopen:Date, dateofclose:Date,
                            balance:BigDecimal, company:String, parentId:String, isDebit:Boolean, isBalanceSheetAccount:Boolean,
                            posted:Date, updated:Date, typeJournal:Int, modelId:Int, isResultAccount:Boolean,
-                           isIncomeStatementAccount:Boolean, subAccounts:List[Account]=List.empty) extends Masterfile {
+                           isIncomeStatementAccount:Boolean, subAccounts:List[Account]=List.empty, balances:List[PeriodicAccountBalance]=List.empty) extends Masterfile {
   def add(accounts:List[Account]):Account = this.copy(subAccounts=accounts)
   def addMe(account:Account):Account = this.copy(subAccounts=subAccounts:+account)
 }
@@ -117,7 +117,8 @@ object Account {
 
   def addAllSubAccounts(accounts:List[Account]):List[Account] =
     accounts.map(x=> x.copy(subAccounts=accounts.filter(_.parentId.equals(x.id))))
-
+  def addBalances(periode:Int, accounts:List[Account], balances:List[PeriodicAccountBalance]):List[Account] =
+    accounts.map(x=>x.copy(balances=balances.filter(_.periode==periode)))
  def apply (id:String, name:String, description:String, dateofopen:String, dateofclose:String,
              balance:String, company:String, parentId:String, isDebit:String, isBalanceSheetAccount:String,
              posted:String, updated:String, typeJournal:String, modelId:String, isResultAccount:String,

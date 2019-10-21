@@ -56,7 +56,7 @@ object WebServer {
 
 
   def fetchMostSpeeches(col:List[Speech], year: Int):String = {
-    val l = col.filter(filterByYear(year, _))
+    val l = col.toStream.filter(filterByYear(year, _))
            .map(x => (x.speaker,getYear(x)))
            .groupBy(_._1)
            .mapValues(_.map(_._2).sum/year)
