@@ -5,7 +5,7 @@ import java.nio.charset.{CharsetDecoder, CodingErrorAction}
 
 import com.iws.main.ImportFunction._
 import com.iws.model._
-import com.iws.service.Processing.ProcessFinancialsTransaction
+import com.iws.service.ProcessFinancialsTransaction
 import zio.{Ref, UIO}
 
 import scala.io.Codec
