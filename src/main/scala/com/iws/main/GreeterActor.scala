@@ -6,10 +6,6 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import com.iws.main.GreeterMain._
 
-
-//object GreeterActor {
-
-
 object Greeter {
   final case class Greet(whom: String, replyTo: ActorRef[Greeted])
   final case class Greeted(whom: String, from: ActorRef[Greet])
@@ -57,9 +53,6 @@ object GreeterMain {
 }
 
 object AkkaQuickstart extends App {
-
   val greeterMain: ActorSystem[GreeterMain.Start] = ActorSystem(GreeterMain(), "AkkaQuickStart")
-
   greeterMain ! Start("Charles")
 }
-//}
