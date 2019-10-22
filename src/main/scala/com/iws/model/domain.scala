@@ -45,11 +45,10 @@ sealed trait  Masterfile extends IWS {
       r = m.toInt
       r
     }catch  {
-      case ex: Exception =>
+      case _: Throwable =>
         val l:List[Int] = m.toList.map(c=>c.toInt)
         r = l.fold(0){(z,i) =>z+i}
         r
-      case _ => r
     }finally {
       r
     }
@@ -105,7 +104,8 @@ implicit val speechJsonFormat: RootJsonFormat[Speech] = jsonFormat4(Speech.apply
 final case  class Account (id:String, name:String, description:String, dateofopen:Date, dateofclose:Date,
                            balance:BigDecimal, company:String, parentId:String, isDebit:Boolean, isBalanceSheetAccount:Boolean,
                            posted:Date, updated:Date, typeJournal:Int, modelId:Int, isResultAccount:Boolean,
-                           isIncomeStatementAccount:Boolean, subAccounts:List[Account]=List.empty, balances:List[PeriodicAccountBalance]=List.empty) extends Masterfile {
+                           isIncomeStatementAccount:Boolean, subAccounts:List[Account]=List.empty,
+                           balances:List[PeriodicAccountBalance]=List.empty) extends Masterfile {
   def add(accounts:List[Account]):Account = this.copy(subAccounts=accounts)
   def addMe(account:Account):Account = this.copy(subAccounts=subAccounts:+account)
 }
