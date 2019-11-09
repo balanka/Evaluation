@@ -3,6 +3,10 @@ package com.iws.service
 import com.iws.model._
 
   trait ProcessTransaction [A<:IWS] {
+
+    private [this] def getMapFor(modelId:Int):Map[String,PeriodicAccountBalance]=IWSCache.get(modelId).groupBy(_.id).mapValues(_.head)
+      .asInstanceOf[Map[String,PeriodicAccountBalance]]
+
     def post (transaction:A):List[PeriodicAccountBalance]
     protected [this] def postDebit ( periode:Int, accountId:String, amount:BigDecimal,
                                          company:String, currency:String , modelId:Int) =
@@ -13,13 +17,24 @@ import com.iws.model._
     private [this] def  postAccount(periode:Int, accountId:String, amount:BigDecimal,isDebit:Boolean,
                                     company:String, currency:String, modelId:Int)
       = {
-      val map:Map[String,PeriodicAccountBalance]=IWSCache.get(modelId).groupBy(_.id).mapValues(_.head)
-        .asInstanceOf[Map[String,PeriodicAccountBalance]]
-      val pacc=map.getOrElse(periode.toString.concat(accountId),
+      val pacc=getMapFor(modelId).getOrElse(periode.toString.concat(accountId),
         PeriodicAccountBalance(periode.toString.concat(accountId), accountId, periode, BigDecimal(0),BigDecimal(0),
           BigDecimal(0),  BigDecimal(0), company, currency,modelId ))
       if (isDebit) pacc.copy(debit=pacc.debit+amount) else pacc.copy(credit = pacc.credit + amount)
 
+    }
+    def updatePacc (pacc:PeriodicAccountBalance, amount:BigDecimal, isDebit:Boolean) =
+      if(isDebit)
+      pacc.copy(idebit = pacc.idebit+amount)
+    else
+        pacc.copy(icredit = pacc.credit+amount)
+
+    def updateFollowingBalances(currentPeriode:Int,nextPeriode:Int,accountId:String, amount:BigDecimal, modelId:Int, isDebit:Boolean): Unit ={
+     val l =getMapFor(modelId)
+       for( i<- currentPeriode to nextPeriode)
+       l.get(i.toString.concat(accountId)).toList.map(updatePacc(_, amount,isDebit ))
+       //val map:Map[String,PeriodicAccountBalance]=IWSCache.get(modelId).groupBy(_.id).mapValues(_.head)
+       // .asInstanceOf[Map[String,PeriodicAccountBalance]]
     }
 
   }

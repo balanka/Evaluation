@@ -6,11 +6,13 @@ enablePlugins(ProtobufPlugin)
 val assemblyJarName = taskKey[String]("Evaluation")
 lazy val `zio-version` = "1.0.0-RC15"
 lazy val `zio-interop` = "2.0.0.0-RC6"
+lazy val `cats-core-version` = "2.0.0"
 lazy val zio = "dev.zio" %% "zio" %  `zio-version`
 lazy val `zio-test` = "dev.zio" %% "zio-test" % `zio-version` % "test"
 lazy val `zio-test-sbt` = "dev.zio" %% "zio-test-sbt" % `zio-version` % "test"
 lazy val `zio-interop-shared` = "dev.zio" %% "zio-interop-shared" % `zio-version`
 lazy val `zio-interop-cats` = "dev.zio" %% "zio-interop-cats" % `zio-interop`
+lazy val  `cats-core` ="org.typelevel" %% "cats-core" % `cats-core-version`
 lazy val root = (project in file(".")).
   settings(
     mainClass in assembly := Some("com.iws.main.WebServer"),
@@ -34,6 +36,7 @@ lazy val root = (project in file(".")).
       //"com.github.mlangc"  %% "slf4zio" % "0.2.1",
       //"com.nequissimus" %% "zio-slf4j" % "0.3.0",
       "dev.zio" %% "zio" %  `zio-version`,
+      "org.typelevel" %% "cats-core" % `cats-core-version`,
       "dev.zio" %% "zio-test" % `zio-version` % "test",
       "dev.zio" %% "zio-test-sbt" % `zio-version` % "test"
      // "dev.zio" %% "zio-interop-cats" % `zio-interop`

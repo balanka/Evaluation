@@ -2,7 +2,9 @@ package com.iws.main
 
 import java.io.File
 import java.nio.charset.{CharsetDecoder, CodingErrorAction}
-
+import java.time.LocalDate
+import cats.kernel.Monoid
+import cats.implicits._
 import com.iws.main.ImportFunction._
 import com.iws.model._
 import com.iws.service.ProcessFinancialsTransaction
@@ -13,13 +15,66 @@ import scala.io.Codec
 object  Driver  {
 
   def main(args: Array[String]) {
+    val d1= LocalDate.of(2016, 1, 4)
+    val d2= LocalDate.of(2016, 1, 11)
+    val d3= LocalDate.of(2016, 1, 18)
+    val d4= LocalDate.of(2016, 1, 25)
+    val p1= PeriodicAccountBalance("4711", "201801", "0", "0", "0", "0","1000", "EUR" )
+    val p2= PeriodicAccountBalance("4711", "201802", "0", "0", "0", "0","1000", "EUR" )
+    val p3= PeriodicAccountBalance("4711", "201803", "0", "0", "0", "0","1000", "EUR" )
+    val p4= PeriodicAccountBalance("4711", "201804", "0", "0", "0", "0","1000", "EUR" )
+ val pCounts:List[Map[PeriodicAccountBalance,BigDecimal]] =
+      List(
+        Map(
+          p1 -> BigDecimal(37),
+          p2  -> BigDecimal(64),
+          p3  ->BigDecimal(54)
+        ),
+        Map(
+          p3 -> BigDecimal(60),
+          p3-> BigDecimal(2),
+          p4 -> BigDecimal(75)
+        ),
+        Map(
+          p1 -> BigDecimal(30)
+        )
+      )
+   /* val birdCounts=
+      List(
+        Map(
+          (d1, "cologne", "pigeon") -> BigDecimal(37),
+          (d2, "bonn", "starling") -> BigDecimal(64),
+          (d3, "cologne", "bullfinch") ->BigDecimal(54)
+        ),
+        Map(
+          (d3, "cologne", "bullfinch") -> BigDecimal(60),
+          (d3, "bonn", "bullfinch") -> BigDecimal(2),
+          (d4, "dusseldorf", "bullfinch") -> BigDecimal(75)
+        ),
+        Map(
+          (d1, "cologne", "pigeon") -> BigDecimal(30)
+        )
+      )
+       val x:Map[(LocalDate, String, String), BigDecimal]= birdCounts
+      .flatMap(_.toList)
+      .groupBy(_._1)
+      .map({ case (k,v) => (k, v.map(_._2).sum) })
+    println("x>>>>> "+x +"\n"+ birdCounts.combineAll)
+    */
+   val x:Map[PeriodicAccountBalance, BigDecimal]= pCounts
+      .flatMap(_.toList)
+      .groupBy(_._1)
+      .map({ case (k,v) => (k, v.map(_._2).sum) })
+    println("pCounts >>>>> "+x +"\n pCounts2: "+ pCounts.combineAll)
+    System.exit(0)
 
     val filter = "1000"
     val FS=";"
     val extension= List ("CSV","csv","tsv")
     val pathSup= "/Users/iwsmac/Downloads/import/Supplier"
     val pathCust= "/Users/iwsmac/Downloads/import/Customer"
-    val pathBS= "/Users/iwsmac/Downloads/import/bankStatement/43719244"
+    //val pathBS= "/Users/iwsmac/Downloads/import/bankStatement/43719244"
+    val pathBS= "/Users/iwsmac/Downloads/import/bankStatement/43006329"
     val pathPAB="/Users/iwsmac/Downloads/import/periodicAccountBalance"
     val pathAcc= "/Users/iwsmac/Downloads/import/account"
     val pathBacc= "/Users/iwsmac/Downloads/import/bankAccount"
@@ -36,6 +91,7 @@ object  Driver  {
     val l6= getObjectList(ImportBankStatement.getObjects, pathBS,extension, filter, FS, decoder)
     val l7:List[FinancialsTransaction]= getObjectList(ImportFinancialsTransaction.getObjects, path1,extension, filter, FS, decoder)
     val l8:List[DetailsFinancialsTransaction] = getObjectList(ImportDetailsFinancialsTransaction.getObjects, path2,extension, filter, FS, decoder)
+   // val s=l6.fold(BigDecimal(0.0))((x:BankStatement, y:BankStatement)=> Monoid [BankStatement].combine(x,y))
     val map=l8.groupBy(_.transId)
     val l9=l7.map(t =>t.copy( lines=map.getOrElse(t.tid,List.empty[DetailsFinancialsTransaction])))
 

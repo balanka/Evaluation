@@ -6,6 +6,8 @@ import spray.json.DefaultJsonProtocol._
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import cats.Monoid
+import cats.implicits._
 
 import com.iws.model.common.{Amount, DATE_FORMAT}
 import spray.json.{DeserializationException, JsString, JsValue, RootJsonFormat}
@@ -128,9 +130,14 @@ object Account {
       dateFormat.parse(posted), dateFormat.parse(updated),0,modelId.toInt,
       isResultAccount.toInt, isIncomeStatementAccount.toInt )
 }
-final case  class PeriodicAccountBalance (id:String, accountId:String, periode:Int, idebit:BigDecimal, icredit:BigDecimal,
+ final case  class PeriodicAccountBalance (id:String, accountId:String, periode:Int, idebit:BigDecimal, icredit:BigDecimal,
                                             debit:BigDecimal, credit:BigDecimal,
-                                            company:String, currency:String, modelId:Int = 106) extends IWS
+                                            company:String, currency:String, modelId:Int = 106) extends IWS {
+   def fdebit= debit+idebit
+   def fcredit = credit+icredit
+   def dbalance = fdebit-fcredit
+   def cbalance = fcredit-fdebit
+ }
 object PeriodicAccountBalance {
  def apply ( accountId:String, periode:String, idebit:String, icredit:String,
              debit:String, credit:String, company:String, currency:String) =
@@ -232,6 +239,11 @@ object BankStatement {
     }
   }
   implicit val bankStatementJsonFormat: RootJsonFormat[BankStatement] = jsonFormat12(BankStatement.apply)
+  implicit val bsMonoid:Monoid[BankStatement]= new Monoid [BankStatement] {
+    def empty: BankStatement = BankStatement("", "", "", "", "", "", "", "", "","0.0", "EUR" )
+    def combine(x: BankStatement, y: BankStatement)=x.copy(betrag = x.betrag+y.betrag)
+  }
+
 }
 
 trait Cache [A<:IWS] {
